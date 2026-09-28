@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cadastro de Clientes — Demo</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { background:#F9FAFB; color:#111827; }
+  .sidebar { position:fixed; inset:0 auto 0 0; width:240px; background:#0f172a; color:#cbd5e1; display:flex; flex-direction:column; }
+  .logo { display:flex; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid #1e293b; }
+  .logo-badge { width:40px; height:40px; border-radius:12px; background:#2563eb; display:flex; align-items:center; justify-content:center; }
+  .logo h1 { font-size:15px; color:#fff; font-weight:600; }
+  .logo p { font-size:11px; color:#94a3b8; }
+  nav { padding:16px 12px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; color:#cbd5e1; border:none; background:none; text-align:left; transition:background .15s,color .15s; }
+  .nav-item:hover { background:#1e293b; color:#fff; }
+  .nav-item.active { background:#2563eb; color:#fff; }
+  .sidebar footer { padding:16px 24px; font-size:11px; color:#64748b; }
+  main { margin-left:240px; padding:32px; }
+  h2 { font-size:22px; font-weight:600; }
+  .sub { font-size:13px; color:#6b7280; margin-top:2px; margin-bottom:24px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:24px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .stat { display:flex; align-items:center; gap:16px; }
+  .stat-icon { width:48px; height:48px; border-radius:12px; background:#dbeafe; color:#2563eb; display:flex; align-items:center; justify-content:center; }
+  .stat p { font-size:13px; color:#6b7280; }
+  .stat b { font-size:24px; font-weight:600; color:#111827; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; border:none; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:500; cursor:pointer; transition:background .15s, transform .05s; }
+  .btn:active { transform:scale(.98); }
+  .btn-primary { background:#2563eb; color:#fff; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .btn-ghost { background:#f3f4f6; color:#374151; }
+  .btn-ghost:hover { background:#e5e7eb; }
+  .btn-danger { background:#dc2626; color:#fff; }
+  .btn-danger:hover { background:#b91c1c; }
+  .filters { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:20px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .field { flex:1; min-width:200px; }
+  label { display:block; font-size:13px; font-weight:500; color:#374151; margin-bottom:6px; }
+  input { width:100%; border:1px solid #d1d5db; border-radius:8px; padding:9px 12px; font-size:14px; outline:none; transition:border .15s, box-shadow .15s; background:#fff; }
+  input:focus { border-color:#2563eb; box-shadow:0 0 0 3px #dbeafe; }
+  input.invalid { border-color:#f87171; box-shadow:0 0 0 3px #fee2e2; }
+  .err { color:#ef4444; font-size:11px; margin-top:4px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid #e5e7eb; }
+  thead { background:#f9fafb; }
+  th { text-align:left; padding:16px 24px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; font-weight:600; }
+  td { padding:16px 24px; font-size:14px; border-top:1px solid #f3f4f6; }
+  tbody tr { transition:background .15s; }
+  tbody tr:hover { background:#f9fafb; }
+  td.name { font-weight:500; }
+  td.muted { color:#4b5563; }
+  .actions { display:flex; gap:8px; justify-content:flex-end; }
+  .icon-btn { border:none; border-radius:8px; padding:8px; cursor:pointer; background:none; transition:background .15s; }
+  .icon-btn.edit { color:#2563eb; } .icon-btn.edit:hover { background:#dbeafe; }
+  .icon-btn.del { color:#dc2626; } .icon-btn.del:hover { background:#fee2e2; }
+  .empty { text-align:center; padding:64px; color:#6b7280; background:#fff; border:1px solid #e5e7eb; border-radius:12px; }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50; }
+  .modal { background:#fff; border-radius:12px; padding:28px; width:100%; max-width:640px; max-height:90vh; overflow:auto; box-shadow:0 20px 50px rgba(0,0,0,.2); }
+  .modal.sm { max-width:380px; text-align:center; }
+  .modal h3 { font-size:18px; font-weight:600; margin-bottom:4px; }
+  .modal .sub { margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid .span2 { grid-column:span 2; }
+  @media (max-width:560px){ .grid { grid-template-columns:1fr; } .grid .span2 { grid-column:span 1; } main { margin-left:0; padding:16px; } .sidebar { position:static; width:100%; } }
+  .section-title { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#9ca3af; font-weight:600; margin:18px 0 10px; }
+  .modal-actions { display:flex; gap:12px; margin-top:24px; }
+  .modal-actions .btn { flex:1; justify-content:center; }
+  .warn-icon { width:48px; height:48px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .recent li { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f3f4f6; font-size:14px; list-style:none; }
+  .recent li:last-child { border-bottom:none; }
+  .recent .muted { color:#6b7280; }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-badge">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div><h1>Cadastro de Clientes</h1><p>Painel Administrativo</p></div>
+  </div>
+  <nav>
+    <button class="nav-item active" data-page="dashboard" onclick="go('dashboard')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-page="clientes" onclick="go('clientes')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Clientes
+    </button>
+  </nav>
+  <footer>© 2026 G Rodrigues</footer>
+</aside>
+
+<main id="app"></main>
+<div id="modals"></div>
+
+<script>
+// ---------- Mock data (equivalente ao seed do Prisma) ----------
+let nextId = 4;
+let clients = [
+  { id:1, nome_completo:"Ana Beatriz Souza", cpf:"12345678901", email:"ana.souza@example.com", telefone:"11987654321", data_nascimento:"12/04/1990", rg:"12.345.678-9", cep:"01310-100", logradouro:"Avenida Paulista", numero:"1578", complemento:"Apto 42", bairro:"Bela Vista", cidade:"São Paulo", estado:"SP", created_at:new Date(2026,8,20).toISOString() },
+  { id:2, nome_completo:"Carlos Eduardo Lima", cpf:"98765432100", email:"carlos.lima@example.com", telefone:"21991234567", data_nascimento:"23/09/1985", rg:"", cep:"22041-001", logradouro:"Rua Voluntários da Pátria", numero:"35", complemento:"", bairro:"Botafogo", cidade:"Rio de Janeiro", estado:"RJ", created_at:new Date(2026,8,15).toISOString() },
+  { id:3, nome_completo:"Mariana Ferreira Alves", cpf:"45678912345", email:"mariana.alves@example.com", telefone:"31998776655", data_nascimento:"08/01/1995", rg:"98.765.432-1", cep:"30140-010", logradouro:"Avenida Contorno", numero:"4400", complemento:"Sala 12", bairro:"Centro", cidade:"Belo Horizonte", estado:"MG", created_at:new Date(2026,8,10).toISOString() },
+];
+
+// ---------- Masks ----------
+const digits = s => s.replace(/\D/g,"");
+const maskCPF = v => digits(v).slice(0,11).replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+const maskPhone = v => { const d = digits(v).slice(0,11); return d.length<=10 ? d.replace(/(\d{2})(\d)/,"($1) $2").replace(/(\d{4})(\d)/,"$1-$2") : d.replace(/(\d{2})(\d)/,"($1) $2").replace(/(\d{5})(\d)/,"$1-$2"); };
+const maskCEP = v => digits(v).slice(0,8).replace(/(\d{5})(\d)/,"$1-$2");
+const maskDate = v => digits(v).slice(0,8).replace(/(\d{2})(\d)/,"$1/$2").replace(/(\d{2})(\d{2})$/,"$1/$2");
+const fmtCPF = c => { const d=digits(c).padStart(11,"0"); return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`; };
+const fmtPhone = t => { const d=digits(t); return d.length===11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6,10)}`; };
+
+// ---------- Validation ----------
+function validCPF(v){ const c=digits(v); if(c.length!==11||/^(\d)\1{10}$/.test(c))return false; let s=0; for(let i=0;i<9;i++)s+=+c[i]*(10-i); let d1=(s*10)%11; if(d1===10)d1=0; if(d1!==+c[9])return false; s=0; for(let i=0;i<10;i++)s+=+c[i]*(11-i); let d2=(s*10)%11; if(d2===10)d2=0; return d2===+c[10]; }
+const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+function validDateBR(v){ const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v); if(!m)return false; const d=new Date(+m[3],+m[2]-1,+m[1]); return d.getFullYear()===+m[3]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[1]; }
+
+// ---------- State ----------
+let page = "dashboard";
+let filters = { nome:"", cpf:"" };
+let editingId = null;
+let deletingId = null;
+const app = document.getElementById("app");
+const modals = document.getElementById("modals");
+
+function go(p){ page=p; document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===p)); render(); }
+
+function filtered(){
+  return clients.filter(c =>
+    (!filters.nome || c.nome_completo.toLowerCase().includes(filters.nome.toLowerCase())) &&
+    (!filters.cpf || c.cpf.includes(digits(filters.cpf)))
+  );
+}
+
+function render(){
+  if(page==="dashboard") return renderDashboard();
+  renderClients();
+}
+
+function renderDashboard(){
+  const recent = clients.slice(0,5).map(c=>`<li><span>${c.nome_completo}</span><span class="muted">${c.cidade}/${c.estado}</span></li>`).join("");
+  app.innerHTML = `
+    <h2>Dashboard</h2><p class="sub">Visão geral do sistema de cadastro.</p>
+    <div class="stats">
+      <div class="card stat"><div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><p>Total de Clientes</p><b>${clients.length}</b></div></div>
+      <div class="card stat"><div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg></div><div><p>Adicionados nos últimos 30 dias</p><b>${clients.filter(c=>Date.now()-new Date(c.created_at).getTime()<30*864e5).length}</b></div></div>
+    </div>
+    <div class="card"><h3 style="margin-bottom:8px;font-size:16px">Últimos clientes cadastrados</h3>
+      <ul class="recent">${recent || '<li class="muted">Nenhum cliente cadastrado ainda.</li>'}</ul>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="go('clientes')">Ver todos os clientes →</button>
+    </div>`;
+}
+
+function renderClients(){
+  const rows = filtered().map(c=>`
+    <tr>
+      <td class="name">${c.nome_completo}</td>
+      <td class="muted">${fmtCPF(c.cpf)}</td>
+      <td class="muted">${fmtPhone(c.telefone)}</td>
+      <td><div class="actions">
+        <button class="icon-btn edit" title="Editar" onclick="openForm(${c.id})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+        <button class="icon-btn del" title="Excluir" onclick="askDelete(${c.id})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+      </div></td>
+    </tr>`).join("");
+
+  app.innerHTML = `
+    <div class="header-row">
+      <div><h2>Clientes</h2><p class="sub" style="margin:0">Gerencie os clientes cadastrados.</p></div>
+      <button class="btn btn-primary" onclick="openForm(null)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Incluir Novo Cliente
+      </button>
+    </div>
+    <div class="filters">
+      <div class="field"><label>Buscar por Nome</label><input id="f-nome" placeholder="Ex: Ana" value="${filters.nome}"></div>
+      <div class="field"><label>Buscar por CPF</label><input id="f-cpf" placeholder="Ex: 123.456.789-01" value="${filters.cpf}" oninput="this.value=maskCPF(this.value)"></div>
+      <button class="btn btn-primary" onclick="search()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        Buscar
+      </button>
+    </div>
+    ${rows ? `<table><thead><tr><th>Nome Completo</th><th>CPF</th><th>Telefone</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="empty">Nenhum cliente encontrado.</div>`}`;
+
+  document.getElementById("f-nome").addEventListener("keydown", e=>{ if(e.key==="Enter") search(); });
+  document.getElementById("f-cpf").addEventListener("keydown", e=>{ if(e.key==="Enter") search(); });
+}
+
+function search(){
+  filters.nome = document.getElementById("f-nome").value;
+  filters.cpf = document.getElementById("f-cpf").value;
+  renderClients();
+}
+
+const REQ = ["nome_completo","cpf","email","telefone","data_nascimento","cep","logradouro","numero","bairro","cidade","estado"];
+
+function openForm(id){
+  editingId = id;
+  const c = id ? clients.find(x=>x.id===id) : null;
+  const v = c ? { ...c, cpf:maskCPF(c.cpf), telefone:maskPhone(c.telefone), cep:maskCEP(c.cep) } : {};
+  modals.innerHTML = `
+  <div class="overlay" onclick="if(event.target===this)closeForm()">
+    <div class="modal">
+      <h3>${id?"Editar Cliente":"Incluir Novo Cliente"}</h3>
+      <p class="sub">${id?"Atualize os dados e salve as alterações.":"Preencha os dados do novo cliente. Campos com * são obrigatórios."}</p>
+      <div class="section-title">Dados Pessoais</div>
+      <div class="grid">
+        <div class="span2"><label>Nome Completo *</label><input id="nome_completo" value="${v.nome_completo||""}" placeholder="Ex: Maria da Silva"></div>
+        <div><label>CPF *</label><input id="cpf" value="${v.cpf||""}" placeholder="000.000.000-00" oninput="this.value=maskCPF(this.value)"></div>
+        <div><label>RG</label><input id="rg" value="${v.rg||""}" placeholder="00.000.000-0"></div>
+        <div><label>E-mail *</label><input id="email" value="${v.email||""}" placeholder="exemplo@email.com"></div>
+        <div><label>Telefone *</label><input id="telefone" value="${v.telefone||""}" placeholder="(00) 00000-0000" oninput="this.value=maskPhone(this.value)"></div>
+        <div><label>Data de Nascimento *</label><input id="data_nascimento" value="${v.data_nascimento||""}" placeholder="DD/MM/AAAA" oninput="this.value=maskDate(this.value)"></div>
+      </div>
+      <div class="section-title">Endereço</div>
+      <div class="grid">
+        <div><label>CEP *</label><input id="cep" value="${v.cep||""}" placeholder="00000-000" oninput="this.value=maskCEP(this.value)"></div>
+        <div><label>Logradouro *</label><input id="logradouro" value="${v.logradouro||""}" placeholder="Rua, Avenida..."></div>
+        <div><label>Número *</label><input id="numero" value="${v.numero||""}"></div>
+        <div><label>Complemento</label><input id="complemento" value="${v.complemento||""}" placeholder="Apto, sala..."></div>
+        <div><label>Bairro *</label><input id="bairro" value="${v.bairro||""}"></div>
+        <div><label>Cidade *</label><input id="cidade" value="${v.cidade||""}"></div>
+        <div><label>Estado *</label><input id="estado" maxlength="2" value="${v.estado||""}" placeholder="SP"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveForm()">Salvar</button>
+        <button class="btn btn-ghost" onclick="closeForm()">Cancelar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeForm(){ editingId=null; modals.innerHTML=""; render(); }
+
+function saveForm(){
+  const get = id => document.getElementById(id);
+  const form = { nome_completo:get("nome_completo").value.trim(), cpf:get("cpf").value, email:get("email").value.trim(),
+    telefone:get("telefone").value, data_nascimento:get("data_nascimento").value, rg:get("rg").value.trim(),
+    cep:get("cep").value, logradouro:get("logradouro").value.trim(), numero:get("numero").value.trim(),
+    complemento:get("complemento").value.trim(), bairro:get("bairro").value.trim(), cidade:get("cidade").value.trim(),
+    estado:get("estado").value.toUpperCase() };
+
+  const errs = {};
+  REQ.forEach(f=>{ if(!form[f] || !String(form[f]).trim()) errs[f]="Campo obrigatório."; });
+  if(!errs.cpf && !validCPF(form.cpf)) errs.cpf="CPF inválido.";
+  if(!errs.email && !validEmail(form.email)) errs.email="E-mail inválido.";
+  if(!errs.data_nascimento && !validDateBR(form.data_nascimento)) errs.data_nascimento="Data inválida.";
+  if(!errs.estado && form.estado.length!==2) errs.estado="Use 2 letras (ex: SP).";
+  if(!errs.cpf || !errs.email){
+    const dup = clients.find(c=>c.id!==editingId && (digits(form.cpf)===c.cpf || form.email.toLowerCase()===c.email.toLowerCase()));
+    if(dup){ if(digits(form.cpf)===dup.cpf) errs.cpf="CPF já cadastrado."; if(form.email.toLowerCase()===dup.email.toLowerCase()) errs.email="E-mail já cadastrado."; }
+  }
+
+  document.querySelectorAll(".modal input").forEach(i=>{ i.classList.remove("invalid"); const e=i.parentNode.querySelector(".err"); if(e) e.remove(); i.parentNode.style.position=""; });
+  let ok = Object.keys(errs).length===0;
+  Object.entries(errs).forEach(([f,msg])=>{
+    const input = get(f); if(!input) return;
+    input.classList.add("invalid");
+    const p = document.createElement("p"); p.className="err"; p.textContent=msg;
+    input.parentNode.appendChild(p);
+  });
+  if(!ok) return;
+
+  const data = { ...form, cpf:digits(form.cpf), telefone:digits(form.telefone), cep:digits(form.cep) };
+  if(editingId){ const i=clients.findIndex(c=>c.id===editingId); clients[i]={...clients[i],...data}; }
+  else clients.push({ id:nextId++, ...data, created_at:new Date().toISOString() });
+  closeForm();
+  if(page==="clientes") filters={nome:"",cpf:""};
+  render();
+}
+
+function askDelete(id){
+  deletingId = id;
+  const c = clients.find(x=>x.id===id);
+  modals.innerHTML = `
+  <div class="overlay">
+    <div class="modal sm">
+      <div class="warn-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+      <h3>Excluir cliente</h3>
+      <p class="sub">Tem certeza que deseja excluir <strong>${c.nome_completo}</strong>? Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="cancelDelete()">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Excluir</button>
+      </div>
+    </div>
+  </div>`;
+}
+function cancelDelete(){ deletingId=null; modals.innerHTML=""; }
+function confirmDelete(){ clients = clients.filter(c=>c.id!==deletingId); cancelDelete(); render(); }
+
+render();
+</script>
+</body>
+</html>
